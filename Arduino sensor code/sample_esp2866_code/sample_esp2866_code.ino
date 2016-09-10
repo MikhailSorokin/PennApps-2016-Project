@@ -4,6 +4,8 @@
 #include <Wire.h>
 //#include <Adafruit_INA219.h> //library for using I2C
 
+
+
 int sensorPin = 2;//whatever pin the sensor will connect to
 float voltage;
 
@@ -45,7 +47,7 @@ void reconnect() {
       int reading = analogRead(sensorPin);
       float voltage = (reading * 5.0)/1024.0;
       // ... and subscribe to topic
-      client.publish("Temperature1","analogRead(voltage)");
+      client.publish("Temperature1","voltage");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
