@@ -1,6 +1,5 @@
 import paho.mqtt.client as mqtt
 
-
 #I don't understand why this client isn't working, it tells me there is no
 #module named 'paho,' so maybe try it on someone besides mine computer and it
 #will work. -Sam
@@ -21,10 +20,14 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("iot.eclipse.org", 1883, 60)
+client.connect("iot.eclipse.org", 1883)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
 # Other loop*() functions are available that give a threaded interface and a
 # manual interface.
 client.loop_forever()
+
+
+#command to fake a hardware publishing
+#   mosquitto_pub -d -h iot.eclipse.org -p 1883 -t "Temperature1" -m "Hello"
