@@ -1,0 +1,174 @@
+package pennapps.mootoo.co.driver;
+
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import com.mongodb.MongoClient;
+
+import pennapps.mootoo.co.signals.SignalReceiver;
+
+public class ServerDriver implements MqttCallback {
+
+	private static final String BROKER_IP = "127.0.0.1:1883";
+	private static final String BROKER_URI = "tcp://" + BROKER_IP;
+	
+	private static String TOPIC = null;
+	
+	private static MqttClient client;
+	private static MqttConnectOptions options;
+	
+	private static MongoClient clientInstance = null;
+	
+	/**
+	 * There should only be one instance of MongoClient.
+	 * This is true, even when multithreaded
+	 */
+	public static MongoClient getClientInstance() {
+		if (clientInstance == null) {
+			clientInstance = new MongoClient("mongo.mootoo.co");
+		}
+		return clientInstance;
+	}
+	
+	public static void main(String[] args) {	
+		//Once a collection is made, can add stuff to collection
+
+		options = new MqttConnectOptions();
+		//options.setCleanSession(true);
+		//options.setKeepAliveInterval(30);
+		
+		//We can acccess the mac address through the NetworkInterface class
+		NetworkInterface network;
+		byte[] macAddress = null;
+		try {
+			network = NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
+			macAddress = network.getHardwareAddress();
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < macAddress.length; i++) {
+			sb.append(String.format("%02X%s", macAddress[i], (i < macAddress.length - 1) ? "-" : ""));
+		}
+		String clientID = sb.toString();
+		
+		//Try creating client
+		try {
+			
+			client = new MqttClient(BROKER_URI, clientID);
+		} catch (MqttException ex) {
+			ex.printStackTrace();
+			System.exit(-1);
+		}
+		
+		System.out.println("Successfully created client!");
+		ServerDriver sd = new ServerDriver();
+		//If created, then connect
+		sd.connect();
+	}
+	
+	private void connect() {
+		try {
+			while (true) {
+				client.setCallback(this);
+				client.connect(options);
+				client.subscribe(TOPIC);
+			}
+		} catch (MqttException e) {
+			//If couldn't connect, try calling method again
+			if (!client.isConnected()) {
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				connect();
+			}
+			
+			e.printStackTrace();
+		} finally {
+			try {
+				client.disconnect();
+			} catch (MqttException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	@Override
+	public void connectionLost(Throwable exception) {
+		exception.printStackTrace();
+		System.out.println("Reconnecting!");
+		connect();
+	}
+
+	@Override
+	public void deliveryComplete(IMqttDeliveryToken token) {
+		try {
+			System.out.println("Pub complete" + new String(token.getMessage().getPayload()));
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				String[] topicArray = topic.split("/");
+				String database = topicArray[0];
+				String roomName = topicArray[1];
+				String typeSensor = topicArray[2];
+				
+				Double wordAttribute = null;
+				Boolean binaryAttribute = null;
+				
+				if (topicArray[3].getClass() == String.class) {
+					wordAttribute = Double.parseDouble(topicArray[3]);
+				} else {
+					binaryAttribute = Boolean.getBoolean(topicArray[3]);
+				}
+				
+				TOPIC = topic;
+				SignalReceiver signalReceiver = new SignalReceiver(typeSensor);
+				
+				/*A While loop will happen here that will not run until
+				* a connection has been received*/
+				//TODO: Use this while implementing threads
+				
+				if (wordAttribute != null) {
+					signalReceiver.transmitSensorInfo(database, roomName, wordAttribute);
+				} else {
+					signalReceiver.transmitSensorInfo(database, roomName, binaryAttribute);
+				}
+				/*while (true) {
+					if (signalReceiver.hasReceivedNewSignal()) {
+							signalReceiver.transmitSensorInfo();
+					}
+				}*/
+			}
+			
+		}).start();
+	}
+	
+}
+
+

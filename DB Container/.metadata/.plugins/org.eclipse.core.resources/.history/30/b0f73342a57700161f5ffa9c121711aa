@@ -1,0 +1,5 @@
+package pennapps.mootoo.co.signals;
+
+public class PhotoSensor {
+
+}

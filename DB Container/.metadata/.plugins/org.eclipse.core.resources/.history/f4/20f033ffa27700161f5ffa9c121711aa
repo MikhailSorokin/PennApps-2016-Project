@@ -1,0 +1,55 @@
+package pennapps.mootoo.co.signals;
+
+import pennapps.mootoo.co.sensor.InfraredSensor;
+import pennapps.mootoo.co.sensor.TemperatureSensor;
+import pennapps.mootoo.co.sensor.VibrationSensor;
+
+/**
+ * This class gets whatever signal has been transmitted
+ * and sets up the information about the sensor, based on
+ * what sensor is being used currently.
+ * @author Misha
+ *
+ */
+public class SignalReceiver {
+	
+
+	public enum SensorType { TEMPERATURE, VIBRATOR, INFRARED };
+	
+	private boolean receivedSignal = false;
+	private SensorType sensorType = SensorType.TEMPERATURE;
+	
+	public SignalReceiver(String sensorName) {
+		receivedSignal = true;
+		
+		if (sensorName == "Temp") {
+			sensorType = SensorType.TEMPERATURE;
+		} else if (sensorName == "vibration") {
+			sensorType = SensorType.VIBRATOR;
+		} else {
+			sensorType = SensorType.INFRARED;
+		}
+	}
+	
+	public boolean hasReceivedNewSignal() {
+		return receivedSignal;
+	}
+
+	public SensorType getSensorType() {
+		return sensorType;
+	}
+	
+	public void transmitSensorInfo(String database, String roomName) {
+		if (sensorType == SensorType.TEMPERATURE) {
+			TemperatureSensor tempSensor = new TemperatureSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			tempSensor.addSensorInfoToDocument(database, roomName);
+		} else if (sensorType == SensorType.VIBRATOR) {
+			VibrationSensor vibrationSensor = new VibrationSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			vibrationSensor.addSensorInfoToDocument(database, roomName);
+		} else {
+			InfraredSensor infraredSensor = new InfraredSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			infraredSensor.addSensorInfoToDocument(database, roomName);
+		}
+	}
+	
+}

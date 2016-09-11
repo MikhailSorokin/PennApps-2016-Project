@@ -1,0 +1,35 @@
+package pennapps.mootoo.co.sensor;
+
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
+import pennapps.mootoo.co.driver.ServerDriver;
+
+public class PhotoSensor extends Sensor {
+
+	private boolean cameraOn = false;
+	
+	//Adafruit Huzza
+	
+	public PhotoSensor(String uniqueName, String location, boolean cameraStatus, MongoClient client) {
+		super(uniqueName, location);
+		this.cameraOn = cameraStatus;
+	}
+
+	public void addSensorInfoToDocument(String database, String roomName, MongoClient client) {
+		Document doc = new Document("location", roomName)
+				.append("Camera status", cameraOn);
+		
+		MongoDatabase db = client.getDatabase(database);
+		
+		MongoCollection<Document> collections = db.getCollection("sensors");
+		collections.insertOne(doc);
+	}
+
+	public void setPhotoStatus(boolean newValue) {
+		cameraOn = newValue;
+	}
+
+}

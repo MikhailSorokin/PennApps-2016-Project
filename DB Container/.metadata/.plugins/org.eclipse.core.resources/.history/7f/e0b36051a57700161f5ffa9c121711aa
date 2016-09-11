@@ -1,0 +1,31 @@
+package pennapps.mootoo.co.sensor;
+
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
+import pennapps.mootoo.co.driver.ServerDriver;
+
+public class MicSensor extends Sensor {
+
+	private double heatAmnt; //idk lol
+	
+	//Adafruit Huzza
+	
+	public InfraredSensor(String uniqueName, String location, double heatAmnt) {
+		super(uniqueName, location);
+		this.heatAmnt = heatAmnt;
+	}
+
+	public void addSensorInfoToDocument(String database, String roomName) {
+		Document doc = new Document("location", roomName)
+				.append("heatAmount", heatAmnt);
+		
+		MongoDatabase db = ServerDriver.getClientInstance().getDatabase(database);
+		
+		MongoCollection<Document> collections = db.getCollection("sensors");
+		collections.insertOne(doc);
+	}
+
+}

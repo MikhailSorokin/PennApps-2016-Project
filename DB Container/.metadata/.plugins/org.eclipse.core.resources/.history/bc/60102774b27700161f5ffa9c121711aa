@@ -1,0 +1,115 @@
+package pennapps.mootoo.co.signals;
+
+import java.util.ArrayList;
+
+import pennapps.mootoo.co.sensor.MicSensor;
+import pennapps.mootoo.co.sensor.PhotoSensor;
+import pennapps.mootoo.co.sensor.Sensor;
+import pennapps.mootoo.co.sensor.TemperatureSensor;
+import pennapps.mootoo.co.sensor.VibrationSensor;
+
+/**
+ * This class gets whatever signal has been transmitted
+ * and sets up the information about the sensor, based on
+ * what sensor is being used currently.
+ * @author Misha
+ *
+ */
+public class SignalReceiver {
+	
+
+	public enum SensorType { TEMPERATURE, VIBRATOR, PHOTO, MIC };
+	
+	private boolean receivedSignal = false;
+	private SensorType sensorType = SensorType.TEMPERATURE;
+	
+	private ArrayList<Sensor> allTypes = new ArrayList<Sensor>();
+
+	public SignalReceiver(String sensorName) {
+		receivedSignal = true;
+		
+		if (sensorName == "Temp") {
+			sensorType = SensorType.TEMPERATURE;
+		} else if (sensorName == "Vibe") {
+			sensorType = SensorType.VIBRATOR;
+		} else if (sensorName == "Photo") {
+			sensorType = SensorType.PHOTO;
+		} else if (sensorName == "Mic") {
+			sensorType = SensorType.MIC;
+		}
+	}
+	
+	public boolean hasReceivedNewSignal() {
+		return receivedSignal;
+	}
+
+	public SensorType getSensorType() {
+		return sensorType;
+	}
+	
+	public void transmitSensorInfo(String database, String roomName, String newValue) {
+		if (sensorType == SensorType.TEMPERATURE) {
+			TemperatureSensor tempSensor = new TemperatureSensor(database, roomName, 75.5);
+			
+			if (!hasExistingRoom(tempSensor)) {
+				tempSensor.addSensorInfoToDocument(database, roomName);
+				allTypes.add(tempSensor); 
+			} else {
+				tempSensor.setTemperature(newValue);
+			}
+		} else if (sensorType == SensorType.VIBRATOR) {
+			VibrationSensor vibrationSensor = new VibrationSensor(database, roomName, );
+			
+			if (!hasExistingRoom(vibrationSensor)) {
+				vibrationSensor.addSensorInfoToDocument(database, roomName);
+				allTypes.add(vibrationSensor);
+			} else {
+				vibrationSensor.setVibrationStatus(true);
+			}
+		} else if (sensorType == SensorType.PHOTO) {
+			PhotoSensor photoSensor = new PhotoSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			photoSensor.addSensorInfoToDocument(database, roomName);
+		} else if (sensorType == SensorType.MIC) {
+			MicSensor micSensor = new MicSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			micSensor.addSensorInfoToDocument(database, roomName);
+		}
+	}
+	
+	public void transmitSensorInfo(String database, String roomName, boolean newValue) {
+		if (sensorType == SensorType.TEMPERATURE) {
+			TemperatureSensor tempSensor = new TemperatureSensor(database, roomName, 75.5);
+			
+			if (!hasExistingRoom(tempSensor)) {
+				tempSensor.addSensorInfoToDocument(database, roomName);
+				allTypes.add(tempSensor); 
+			} else {
+				tempSensor.setTemperature(newValue);
+			}
+		} else if (sensorType == SensorType.VIBRATOR) {
+			VibrationSensor vibrationSensor = new VibrationSensor(database, roomName, );
+			
+			if (!hasExistingRoom(vibrationSensor)) {
+				vibrationSensor.addSensorInfoToDocument(database, roomName);
+				allTypes.add(vibrationSensor);
+			} else {
+				vibrationSensor.setVibrationStatus(true);
+			}
+		} else if (sensorType == SensorType.PHOTO) {
+			PhotoSensor photoSensor = new PhotoSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			photoSensor.addSensorInfoToDocument(database, roomName);
+		} else if (sensorType == SensorType.MIC) {
+			MicSensor micSensor = new MicSensor("GetUniqueName", "GetUniqueLocation", 75.5);
+			micSensor.addSensorInfoToDocument(database, roomName);
+		}
+	}
+	
+	private boolean hasExistingRoom(Sensor sensor) {
+		for (int i = 0 ; i < )
+		if (allTypes.contains(sensor)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+}

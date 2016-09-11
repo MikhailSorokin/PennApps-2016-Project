@@ -1,0 +1,131 @@
+package pennapps.mootoo.co.separate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bson.Document;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
+public class MqttConnection implements MqttCallback {
+
+	private static final String BROKER_IP = "iot.eclipse.org";
+	private static final String BROKER_PORT = "1883";
+	private static final String BROKER_URI = "tcp://" + BROKER_IP + ":" + BROKER_PORT;
+	
+	private static final String CLIENT_ID = "newnig";
+	
+	private static final String TOPIC = "pennapps_sensors/smash/temperature";
+	
+	private static MqttClient client;
+	private static MqttConnectOptions options;
+	
+	private static MongoClient mongoClient;
+	
+	public enum Type {
+	    Double, Boolean, String;
+	}
+	
+	public static void main (String[] args) {
+	    mongoClient = new MongoClient("localhost", 27017);
+	    try {
+	        client = new MqttClient(BROKER_URI, CLIENT_ID);
+	    } catch (MqttException ex) {
+	        Logger.getLogger(MqttConnection.class.getName()).log(Level.SEVERE, null, ex);
+	    }
+	    options = new MqttConnectOptions();
+		options.setCleanSession(true);
+		options.setKeepAliveInterval(30);
+	    
+		MqttConnection mqttConnection = new MqttConnection();
+	    mqttConnection.connect();
+	}
+	
+	public void connect() {
+	    try {
+	        client.setCallback(this);
+	    	client.connect(options);
+	    	MqttMessage message = new MqttMessage();
+	    	message.setPayload("Single message".getBytes());
+	    	message.setQos(0);
+	        client.subscribe(TOPIC);
+	        System.out.println("Set ");
+	    } catch (MqttException ex) {
+	    	if (!client.isConnected()) {
+	            try {
+	                Thread.sleep(5000);
+	            } catch (InterruptedException ex1) {
+	                Logger.getLogger(MqttConnection.class.getName()).log(Level.SEVERE, null, ex1);
+	            }
+	            connect();
+	        }
+	    }
+	}
+
+	
+    @Override
+    public void connectionLost(Throwable thrwbl) {
+       System.out.println("The connection has been lost.");
+       thrwbl.printStackTrace();
+       connect();
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage message) throws Exception {
+    	new Thread(new Runnable() {
+
+        	@Override
+            public void run() {
+        		System.out.println(".");
+        		System.out.flush();
+                String[] tab = topic.split("/", 2);
+                String dbName = tab[0];
+                String collName = (tab.length > 1) ? tab[1] : tab[0];
+                MongoDatabase db = mongoClient.getDatabase(dbName);
+                MongoCollection<Document> collection = db.getCollection(collName);
+                Type type = checkType(message.toString());
+                System.out.println("Type: " + type);
+                switch (type) {
+                    case Double :
+                        collection.insertOne(new Document
+                    			("value", Double.valueOf(message.toString())));
+                        break;
+                    case Boolean :
+                        collection.insertOne(new Document
+                        		("value", Boolean.valueOf(message.toString())));
+                        break;
+                    case String :
+                        collection.insertOne(new Document
+                        		("value", message.toString()));
+                        break;
+                }
+            }
+
+        }).start();
+    }
+
+    private Type checkType(String str) {
+        if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false"))
+            return Type.Boolean;
+        else {
+            try {
+                Double.valueOf(str);
+                return Type.Double;
+            } catch (NumberFormatException e) {
+                return Type.String;
+            }
+        }
+    }
+    
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken imdt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+}
