@@ -1,0 +1,42 @@
+package pennapps.mootoo.co.sensor;
+
+import org.bson.Document;
+
+import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+
+public class VibrationSensor extends Sensor {
+
+	private int vibrationStatus; 
+	
+	//Adafruit Huzza
+	
+	public VibrationSensor(String uniqueName, String location, int vib, MongoClient client) {
+		super(uniqueName, location);
+		this.vibrationStatus = vib;
+	}
+
+	public void addSensorInfoToDocument(String database, String roomName, MongoClient client) {
+		Document doc = new Document("location", roomName)
+				.append("Vibration Amount", (vibrationStatus == 1) ? true : false);
+		
+		MongoDatabase db = client.getDatabase(database);
+		
+		MongoCollection<Document> collections = db.getCollection("sensors");
+		collections.insertOne(doc);
+		
+		FindIterable<Document> allDocs = collections.find().iterator();
+		
+		for (MongoCursor<Document> collection : allDocs.iterator()) {
+			
+		}
+	}
+	
+	public void setVibrationStatus(int status) {
+		vibrationStatus = status;
+	}
+
+}

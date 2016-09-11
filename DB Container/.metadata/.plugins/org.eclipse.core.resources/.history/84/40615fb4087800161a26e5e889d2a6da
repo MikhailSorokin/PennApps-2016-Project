@@ -1,0 +1,7 @@
+package pennapps.mootoo.co.parsers;
+
+public static class JsonContainer {
+
+	List<I>
+	
+}

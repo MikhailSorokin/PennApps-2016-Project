@@ -2,3 +2,31 @@
 2016-09-10 17:07:47,476 [Worker-2] INFO  c.g.t.t.d.PublishedGradleVersions - Gradle version information cache is up-to-date. Trying to read.
 2016-09-10 17:22:31,983 [Worker-1] INFO  c.g.t.t.d.PublishedGradleVersions - Gradle version information cache is up-to-date. Trying to read.
 2016-09-10 22:11:07,052 [Worker-3] INFO  c.g.t.t.d.PublishedGradleVersions - Gradle version information cache is up-to-date. Trying to read.
+2016-09-11 02:19:58,106 [Worker-102] ERROR o.e.r.s.GitSnippetRepository - Transport operation failed.
+org.eclipse.jgit.api.errors.TransportException: Premature EOF
+	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:135) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.recommenders.snipmatch.GitSnippetRepository.fetch(GitSnippetRepository.java:197) ~[org.eclipse.recommenders.snipmatch_2.4.0.v20160607-1609.jar:na]
+	at org.eclipse.recommenders.snipmatch.GitSnippetRepository.open(GitSnippetRepository.java:90) ~[org.eclipse.recommenders.snipmatch_2.4.0.v20160607-1609.jar:na]
+	at org.eclipse.recommenders.internal.snipmatch.rcp.EclipseGitSnippetRepository$2.run(EclipseGitSnippetRepository.java:165) [org.eclipse.recommenders.snipmatch.rcp_2.4.0.v20160607-1609.jar:na]
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55) [org.eclipse.core.jobs_3.8.0.v20160509-0411.jar:na]
+Caused by: org.eclipse.jgit.errors.TransportException: Premature EOF
+	at org.eclipse.jgit.transport.BasePackConnection.readAdvertisedRefs(BasePackConnection.java:186) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.TransportHttp$SmartHttpFetchConnection.<init>(TransportHttp.java:748) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.TransportHttp.openFetch(TransportHttp.java:294) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.FetchProcess.executeImp(FetchProcess.java:136) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.FetchProcess.execute(FetchProcess.java:122) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.Transport.fetch(Transport.java:1179) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:128) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	... 4 common frames omitted
+Caused by: java.io.IOException: Premature EOF
+	at sun.net.www.http.ChunkedInputStream.readAheadBlocking(ChunkedInputStream.java:565) ~[na:1.8.0_11]
+	at sun.net.www.http.ChunkedInputStream.readAhead(ChunkedInputStream.java:609) ~[na:1.8.0_11]
+	at sun.net.www.http.ChunkedInputStream.read(ChunkedInputStream.java:696) ~[na:1.8.0_11]
+	at java.io.FilterInputStream.read(FilterInputStream.java:133) ~[na:1.8.0_11]
+	at sun.net.www.protocol.http.HttpURLConnection$HttpInputStream.read(HttpURLConnection.java:3322) ~[na:1.8.0_11]
+	at org.eclipse.jgit.util.IO.readFully(IO.java:247) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.PacketLineIn.readLength(PacketLineIn.java:186) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.PacketLineIn.readString(PacketLineIn.java:138) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.BasePackConnection.readAdvertisedRefsImpl(BasePackConnection.java:199) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	at org.eclipse.jgit.transport.BasePackConnection.readAdvertisedRefs(BasePackConnection.java:180) ~[org.eclipse.jgit_4.4.0.201606070830-r.jar:4.4.0.201606070830-r]
+	... 10 common frames omitted

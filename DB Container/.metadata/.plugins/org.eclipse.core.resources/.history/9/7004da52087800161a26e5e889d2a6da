@@ -1,0 +1,5 @@
+package pennapps.mootoo.co.parsers;
+
+public class JsonContainer {
+
+}

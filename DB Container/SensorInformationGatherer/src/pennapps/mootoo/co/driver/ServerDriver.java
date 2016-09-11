@@ -1,30 +1,35 @@
 package pennapps.mootoo.co.driver;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+
 import com.mongodb.MongoClient;
 
 import pennapps.mootoo.co.signals.SignalReceiver;
 
+/**
+ * Created by Mikhail Sorokin at the 2016 PennApps Hackathon.
+ * @author Misha
+ *
+ */
 public class ServerDriver implements MqttCallback {
 
-	private static final String BROKER_IP = "iot.eclipse.org";
+	private static final String BROKER_IP = "iot.mootoo.co";
 	private static final String BROKER_URI = "tcp://" + BROKER_IP;
 	
-	private static String TOPIC = null;
-	
 	private static MqttClient client;
-	private static MqttConnectOptions options;
-	
+
 	private MongoClient clientInstance;
 	
 	/**
@@ -32,17 +37,18 @@ public class ServerDriver implements MqttCallback {
 	 * This is true, even when multithreaded
 	 */
 	
-	public static void main(String[] args) {	
-		//Once a collection is made, can add stuff to collection
-
-		options = new MqttConnectOptions();
-		options.setCleanSession(true);
-		options.setKeepAliveInterval(30);
-		
+	public static void main(String[] args) {
 		ServerDriver sd = new ServerDriver();
 		//If created, then connect
 		sd.connect();
 	}
+	
+	/*private static DBCollection checkConnection(String collection) throws UnknownHostException{
+	    if(db == null){
+	        db = (new MongoClient(host, port)).getDB(database);
+	    }
+	    return db.getCollection(collection);
+	}*/
 	
 	private void connect() {
 		try {
@@ -68,21 +74,55 @@ public class ServerDriver implements MqttCallback {
 			
 			//Try creating client
 			try {
-				clientInstance = new MongoClient("mootoo.co");
+				clientInstance = new MongoClient("mongo.mootoo.co");
 				client = new MqttClient(BROKER_URI, clientID);
+				System.out.println(clientID);
 			} catch (MqttException ex) {
 				ex.printStackTrace();
 				System.exit(-1);
 			}
+			//Once a collection is made, can add stuff to collection
+			InetAddress inet;
 			
-			client.connect(options);
-			client.setCallback(this);
-			client.subscribe(TOPIC);
+			 try {
+
+			    inet = InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 });
+			    System.out.println("Sending Ping Request to " + inet);
+				System.out.println(inet.isReachable(5000) ? "Localhost is reachable" : "Localhost is NOT reachable");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+				
+				client.connect();
+				client.setCallback(this);
+				System.out.println("Connected");
+				
+				//Need to subscribe all rooms
+				client.subscribe("PennApps/Room 305/Temp");
+				client.subscribe("PennApps/Room 305/Vibe");
+				client.subscribe("PennApps/Room 305/Photo");
+				client.subscribe("PennApps/Room 305/Mic");
+				
+				client.subscribe("PennApps/Smash/Temp");
+				client.subscribe("PennApps/Smash/Vibe");
+				client.subscribe("PennApps/Smash/Photo");
+				client.subscribe("PennApps/Smash/Mic");
+				
+				client.subscribe("PennApps/Food Room/Temp");
+				client.subscribe("PennApps/Food Room/Vibe");
+				client.subscribe("PennApps/Food Room/Photo");
+				client.subscribe("PennApps/Food Room/Mic");
+				
+				client.subscribe("PennApps/Sponsor Hall/Temp");
+				client.subscribe("PennApps/Sponsor Hall/Vibe");
+				client.subscribe("PennApps/Sponsor Hall/Photo");
+				client.subscribe("PennApps/Sponsor Hall/Mic");
+				
 		} catch (MqttException e) {
 			//If couldn't connect, try calling method again
 			if (!client.isConnected()) {
 				try {
-					Thread.sleep(3000);
+					Thread.sleep(200);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -91,15 +131,14 @@ public class ServerDriver implements MqttCallback {
 			}
 			
 			e.printStackTrace();
-		} 
+		}
 		
 	}
 	
+	
 	@Override
 	public void connectionLost(Throwable exception) {
-		exception.printStackTrace();
-		System.out.println("Reconnecting!");
-		connect();
+		//Don't need to do anything for now
 	}
 
 	@Override
@@ -115,43 +154,54 @@ public class ServerDriver implements MqttCallback {
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		new Thread(new Runnable() {
 			@Override
-			public void run() {
-				String[] topicArray = topic.split("/");
-				String database = topicArray[0];
-				String roomName = topicArray[1];
-				String typeSensor = topicArray[2];
+			public synchronized void run() {
 				
-				Double wordAttribute = null;
-				Boolean binaryAttribute = null;
+				while (client.isConnected()) {
+					
+					Timer timer = new Timer();
+					timer.schedule(new MongoExport(), 0, 5000);
+							
+					//Need to split between the topic and the payload information, 
+					//which will display the 
+					String[] topicArray = topic.split("/");
+					String database = topicArray[0];
+					String roomName = topicArray[1];
+					String typeSensor = topicArray[2];
+					
+					System.out.println("Database: " + database + ", RoomName: " + roomName + ", TypeSensor: " + typeSensor);
+					
+					/* A While loop will happen here that will not run until
+					 * a connection has been received. */
+
+					SignalReceiver signalReceiver = new SignalReceiver(typeSensor);
+							
+					int attribute = (char)Integer.parseInt(message.getPayload().toString().substring(message.getPayload().length - 1, message.getPayload().length));
+					signalReceiver.transmitSensorInfo(database, roomName, attribute, clientInstance);
+
+					InetAddress inet;
 				
-				System.out.print("UHM");
-				
-				if (topicArray[3].getClass() == String.class) {
-					wordAttribute = Double.parseDouble(topicArray[3]);
-				} else {
-					binaryAttribute = Boolean.getBoolean(topicArray[3]);
-				}
-				
-				TOPIC = topic;
-				SignalReceiver signalReceiver = new SignalReceiver(typeSensor);
-				
-				/*A While loop will happen here that will not run until
-				* a connection has been received*/
-				//TODO: Use this while implementing threads
-				
-				if (wordAttribute != null) {
-					signalReceiver.transmitSensorInfo(database, roomName, wordAttribute, clientInstance);
-				} else {
-					signalReceiver.transmitSensorInfo(database, roomName, binaryAttribute, clientInstance);
-				}
-				/*while (true) {
-					if (signalReceiver.hasReceivedNewSignal()) {
-							signalReceiver.transmitSensorInfo();
+				    try {
+						inet = InetAddress.getByName(BROKER_IP);
+					    if (inet.isReachable(100)) {
+					    	System.out.println("Host still reachable.");
+					    }
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-				}*/
+				}
 			}
-			
 		}).start();
+	}
+	
+	class MongoExport extends TimerTask {
+	    public void run() {
+			try {
+				Runtime.getRuntime().exec("mongoexport --host mongo.mootoo.co --port 27017 --db PennApps --collection SensorData --out SensorData.json");
+			} catch (IOException e) {
+				System.out.println("Could not form a JSON file!");
+			}
+		}
 	}
 	
 }
