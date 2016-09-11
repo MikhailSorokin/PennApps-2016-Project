@@ -2,7 +2,7 @@
 int sensorPin = 0; //the analog pin the TMP36's Vout (sense) pin is connected to
                         //the resolution is 10 mV / degree centigrade with a
                         //500 mV offset to allow for negative temperatures
- 
+float voltage;
 /*
  * setup() - this function runs once when you turn your Arduino on
  * We initialize the serial connection with the computer
@@ -19,8 +19,8 @@ void loop()                     // run over and over again
  int reading = analogRead(sensorPin);  
  
  // converting that reading to voltage, for 3.3v arduino use 3.3
- float voltage = reading * 5.0;
- voltage /= 1024.0; 
+float voltagae = reading * 5.0;
+voltage /= 1024.0; 
  
  // print out the voltage
  Serial.print(voltage); Serial.println(" volts");

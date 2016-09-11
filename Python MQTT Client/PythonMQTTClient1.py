@@ -11,10 +11,12 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe("Temperature1")
+ #   client.subscribe("PennApps/Smash/Sound")
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
+    print(msg.topic+" "+str(msg.payload)) #where I need to send info to mongodb
+
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -30,4 +32,5 @@ client.loop_forever()
 
 
 #command to fake a hardware publishing
-#   mosquitto_pub -d -h iot.eclipse.org -p 1883 -t "Temperature1" -m "Hello"
+#   mosquitto_pub -d -h iot.eclipse.org -p 1883 -t "PennApps/Smash/Temperature" -m "poop"
+#   mosquitto_pub -d -h iot.mootoo.co -p 1883 -t "PennApps/Smash/Temperature/1" -m ""
